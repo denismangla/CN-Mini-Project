@@ -3,7 +3,7 @@ import ssl
 import json
 from quiz import MCQ
 
-SERVER_IP = "127.0.0.1"
+SERVER_IP = "192.168.56.1"
 PORT = 5000
 
 
