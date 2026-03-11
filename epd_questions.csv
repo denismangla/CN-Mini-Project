@@ -1,0 +1,31 @@
+id|topic|difficulty|question|option_a|option_b|option_c|option_d|correct_option
+1|EPD|Easy|What is the charge of an electron?|-1|+1|0|Depends|A
+2|EPD|Easy|Which component stores electrical energy in an electric field?|Resistor|Capacitor|Inductor|Diode|B
+3|EPD|Easy|What is the unit of electrical resistance?|Ohm|Volt|Ampere|Farad|A
+4|EPD|Easy|Which device converts AC to DC?|Transformer|Rectifier|Capacitor|Inductor|B
+5|EPD|Easy|What is the typical forward voltage drop of a silicon diode?|0.3V|0.7V|1.1V|1.5V|B
+6|EPD|Easy|Which law relates voltage, current, and resistance?|Newton's Law|Ohm's Law|Faraday's Law|Kirchhoff's Law|B
+7|EPD|Easy|Which component opposes changes in current?|Resistor|Capacitor|Inductor|Diode|C
+8|EPD|Easy|What does LED stand for?|Light Emitting Diode|Low Emission Diode|Light Energy Device|Linear Emission Diode|A
+9|EPD|Easy|Which material is commonly used as a semiconductor?|Copper|Aluminum|Silicon|Iron|C
+10|EPD|Easy|What is the function of a transistor?|Amplify signals|Store energy|Convert AC to DC|Measure voltage|A
+1|EPD|Medium|Which configuration of BJT provides the highest voltage gain?|Common Base|Common Emitter|Common Collector|Darlington Pair|B
+2|EPD|Medium|What is the main function of a Zener diode?|Rectification|Voltage regulation|Signal amplification|Current limiting|B
+3|EPD|Medium|Which transistor configuration has the highest input impedance?|Common Emitter|Common Base|Common Collector|Darlington Pair|C
+4|EPD|Medium|In a PN junction diode, the depletion region acts as a:|Conductor|Insulator|Semiconductor|Superconductor|B
+5|EPD|Medium|What is the typical current gain (β) of a BJT?|1-10|20-200|200-500|500-1000|B
+6|EPD|Medium|Which effect is the basis for operation of photodiodes?|Photoelectric effect|Hall effect|Seebeck effect|Peltier effect|A
+7|EPD|Medium|What is the function of a varactor diode?|Voltage regulation|Frequency tuning|Rectification|Amplification|B
+8|EPD|Medium|Which parameter is most critical in high-frequency transistor operation?|Gain|Bandwidth|Noise figure|Transition frequency|D
+9|EPD|Medium|What does the term 'cut-off frequency' refer to in filters?|Maximum frequency|Minimum frequency|Frequency at which output drops to 70.7%|Resonant frequency|C
+10|EPD|Medium|Which device is used to isolate different sections of a circuit?|Transformer|Opto-isolator|Inductor|Capacitor|B
+1|EPD|Hard|What is the primary cause of leakage current in a reverse-biased diode?|Minority carriers|Majority carriers|Thermal agitation|Surface recombination|A
+2|EPD|Hard|In a MOSFET, the threshold voltage is the voltage at which:|Channel is pinched off|Channel begins to conduct|Maximum current flows|Device breaks down|B
+3|EPD|Hard|Which parameter defines the speed of a transistor?|Saturation current|Transition frequency|Breakdown voltage|Gain-bandwidth product|B
+4|EPD|Hard|What is the effect of temperature on the conductivity of intrinsic semiconductors?|Increases|Decreases|Remains constant|Becomes zero|A
+5|EPD|Hard|Which phenomenon causes a breakdown in a heavily reverse-biased diode?|Avalanche breakdown|Zener breakdown|Tunneling effect|Schottky effect|A
+6|EPD|Hard|In a JFET, the drain current is controlled by:|Gate current|Gate voltage|Drain voltage|Source voltage|B
+7|EPD|Hard|What is the main advantage of CMOS over NMOS technology?|Higher speed|Lower power consumption|Greater complexity|Higher cost|B
+8|EPD|Hard|Which factor limits the high-frequency response of a BJT?|Base width|Emitter resistance|Collector capacitance|Transition frequency|D
+9|EPD|Hard|What is the role of the emitter bypass capacitor in an amplifier?|Stabilize biasing|Increase gain|Reduce noise|Improve linearity|B
+10|EPD|Hard|Which material has the highest electron mobility?|Silicon|Germanium|GaAs|InP|C

@@ -1,0 +1,31 @@
+id|topic|difficulty|question|option_a|option_b|option_c|option_d|correct_option
+1|Python|Easy|What is the correct extension for a Python file?|.py|.pyt|.python|.pyth|A
+2|Python|Easy|Which of the following is a mutable data type in Python?|List|String|Tuple|Int|A
+3|Python|Easy|What will the following code print: print(3 * 2)?|6|5|7|8|A
+4|Python|Easy|What is the output of the following code: print(type(5))?|<class 'int'>|<class 'str'>|<class 'float'>|<class 'list'>|A
+5|Python|Easy|Which keyword is used to define a function in Python?|def|func|function|defn|A
+6|Python|Easy|Which method is used to add an element at the end of a list?|append|insert|extend|add|A
+7|Python|Easy|Which of the following is the correct way to create a tuple?|[1, 2, 3]|{1, 2, 3}|(1, 2, 3)|<1, 2, 3>|C
+8|Python|Easy|What will the following code print: print(2 ** 3)?|6|8|10|12|B
+9|Python|Easy|Which of the following is used to handle exceptions in Python?|try-except|catch|except-try|handle-except|A
+10|Python|Easy|What is the purpose of the break statement in Python?|To stop the loop|To continue the loop|To exit the function|To return from the loop|A
+1|Python|Medium|What will the following code output: print('Python'.lower())?|python|Python|pyTHON|PYTHON|A
+2|Python|Medium|How do you declare a global variable in Python?|global variable|variable global|global x|x global|A
+3|Python|Medium|Which of the following functions can be used to get the length of a list?|length()|len()|size()|lengthof()|B
+4|Python|Medium|What does the range() function return?|A list|An iterator|An array|A tuple|B
+5|Python|Medium|Which of the following is used to import a module in Python?|include|import|open|load|B
+6|Python|Medium|What is the output of the following code: print('Hello'.replace('l', 'z'))?|Hezzo|Hezzo|Hezzoz|Helloz|A
+7|Python|Medium|Which of the following is the correct syntax to start a while loop in Python?|while x > 0:|while (x > 0):|while x:while > x:|while x > 0|B
+8|Python|Medium|What does the __init__ method in Python do?|Initializes a class|Defines a function|Defines a constructor|Defines a loop|C
+9|Python|Medium|What is the output of the following code: print(5 // 2)?|2.5|2|3|2.0|B
+10|Python|Medium|Which method can be used to remove an element from a dictionary?|del()|remove()|pop()|discard()|C
+1|Python|Hard|What is the output of the following code: print([1, 2, 3] == [1, 2, 3])?|True|False|Error|True False|A
+2|Python|Hard|How would you create a set in Python?|{1, 2, 3}|[1, 2, 3]|(1, 2, 3)|1, 2, 3|B
+3|Python|Hard|Which of the following data types is not supported in Python?|Array|Dictionary|List|Tuple|A
+4|Python|Hard|Which Python method is used to combine two lists?|append()|join()|merge()|extend()|D
+5|Python|Hard|What will the following code output: print(int('100', 2))?|4|5|6|7|A
+6|Python|Hard|Which function is used to return the current date and time in Python?|time()|getTime()|date()|datetime()|D
+7|Python|Hard|How do you open a file for reading in Python?|open('file.txt')|file.open('file.txt')|open.read('file.txt')|open('file.txt', 'r')|D
+8|Python|Hard|What will the following code print: print(5 != 5)?|True|False|5|Error|B
+9|Python|Hard|How would you create an empty dictionary in Python?|{}|[]|()|dict()|D
+10|Python|Hard|Which of the following will generate an error in Python?|x = 2 / 0|x = 2|x = '2'|x = 2 + 2|C

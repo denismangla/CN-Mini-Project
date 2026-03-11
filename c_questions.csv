@@ -1,0 +1,31 @@
+id|topic|difficulty|question|option_a|option_b|option_c|option_d|correct_option
+1|C Programming|Easy|Which of the following is the correct syntax to declare a variable in C?|int x|int = x|x = int|int: x|A
+2|C Programming|Easy|What is the output of: printf("%d", 10 + 5);|15|105|10+5|%d|A
+3|C Programming|Easy|Which header file is needed for printf()?|stdio.h|conio.h|math.h|stdlib.h|A
+4|C Programming|Easy|Which data type is used for single characters?|int|char|string|float|B
+5|C Programming|Easy|How do you start a multi-line comment in C?|/*|**|//|#|A
+6|C Programming|Easy|Which symbol is used to end a statement in C?|.|;|!|:|B
+7|C Programming|Easy|What does `int main()` represent?|Function definition|Loop|Variable declaration|Array declaration|A
+8|C Programming|Easy|What is the default value of an uninitialized local variable in C?|0|Garbage value|Depends on OS|None|B
+9|C Programming|Easy|Which of the following is a loop in C?|repeat|for|iterate|run|B
+10|C Programming|Easy|Which of the following is used to take input?|getchar()|printf()|scanf()|getch()|C
+1|C Programming|Medium|What is the size of an int on most 32-bit systems?|2 bytes|4 bytes|8 bytes|Depends on compiler|B
+2|C Programming|Medium|Which keyword is used to define a function in C?|define|function|void|int|C
+3|C Programming|Medium|What is the purpose of the 'return' keyword?|Stops execution|Returns value|Defines a loop|Prints result|B
+4|C Programming|Medium|What does `sizeof` operator do?|Finds length|Finds size of variable|Allocates memory|Compares values|B
+5|C Programming|Medium|What is the output of: printf("%d", sizeof(int));|2|4|8|Compiler dependent|B
+6|C Programming|Medium|Which format specifier is used for float values?|%d|%f|%c|%s|B
+7|C Programming|Medium|What is the index of the first element in an array?|0|1|-1|Depends on type|A
+8|C Programming|Medium|Which operator is used for logical AND?|&&|&|AND|&&&|A
+9|C Programming|Medium|Which function is used to get a string input?|gets()|getchar()|scanf()|fgets()|D
+10|C Programming|Medium|What will be the result of: 5 > 3 && 2 < 1?|true|false|1|0|D
+1|C Programming|Hard|What will be the output of: int a=5; printf("%d", a++);|6|5|Error|Undefined|B
+2|C Programming|Hard|Which of the following is used to allocate dynamic memory?|malloc()|calloc()|realloc()|All of the above|D
+3|C Programming|Hard|Which of the following is not a valid storage class in C?|auto|register|static|immutable|D
+4|C Programming|Hard|What is a pointer in C?|A variable to store memory address|A data type|A function|A loop|A
+5|C Programming|Hard|Which operator is used to access value at pointer address?|*|&|->|@|A
+6|C Programming|Hard|Which function is used to deallocate memory?|free()|remove()|delete()|clear()|A
+7|C Programming|Hard|Which of the following is a function pointer declaration?|int *f()|int (*f)()|*int f()|f int()|B
+8|C Programming|Hard|Which one is not part of dynamic memory functions?|malloc()|calloc()|dealloc()|realloc()|C
+9|C Programming|Hard|What does `const` keyword do in C?|Makes variable read-only|Allocates memory|Compiles faster|Creates macro|A
+10|C Programming|Hard|What will happen if array is accessed out of bounds?|Compile error|Undefined behavior|Returns 0|Segfault|B

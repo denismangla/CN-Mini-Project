@@ -1,0 +1,31 @@
+id|topic|difficulty|question|option_a|option_b|option_c|option_d|correct_option
+1|Triple Integration|Easy|What is the value of the triple integral of f(x, y, z) = 1 over a cube of side 2 centered at origin?|8|4|2|1|A
+2|Triple Integration|Easy|In cylindrical coordinates, the volume element dV is:|r dz dr dθ|r dr dθ dz|r^2 dr dθ dz|r^2 dθ dr dz|A
+3|Triple Integration|Easy|Triple integral is generally used to compute:|Area|Volume|Mass|Length|B
+4|Triple Integration|Easy|The triple integral ∫₀¹∫₀¹∫₀¹ x² dz dy dx equals:|1/3|1/2|1/6|1/12|C
+5|Triple Integration|Easy|Which coordinate system is best for spherical symmetry?|Cartesian|Cylindrical|Spherical|Polar|C
+6|Triple Integration|Easy|In triple integration, limits of outer integral represent range for:|x|y|z|Any variable|A
+7|Triple Integration|Easy|Which of these is not a use of triple integration?|Volume calculation|Mass distribution|Surface integral|Center of mass|C
+8|Triple Integration|Easy|To switch order of integration we need to:|Redraw limits|Change variables|Keep order same|None|A
+9|Triple Integration|Easy|The function f(x,y,z)=x+y+z is integrated over unit cube, value is:|1.5|3|1|0.5|A
+10|Triple Integration|Easy|Which of these statements is true about triple integrals?|They give 2D area|Only used in physics|They give 3D volume|Used only for cuboids|C
+1|Triple Integration|Medium|What is ∭ x y z dx dy dz over [0,1]x[0,1]x[0,1]?|1/6|1/8|1/4|1/3|A
+2|Triple Integration|Medium|When converting to cylindrical coordinates, x =?|r cosθ|r sinθ|zr|θr|A
+3|Triple Integration|Medium|Triple integrals can be evaluated as:|Nested integrals|Single summation|Double integrals only|Surface integrals|A
+4|Triple Integration|Medium|Which axis is typically outermost in triple integral in spherical coordinates?|ρ|θ|φ|Any of the above|A
+5|Triple Integration|Medium|Volume of region under z = 1 - x - y over unit square using triple integration is:|1/6|1/2|1/3|1|A
+6|Triple Integration|Medium|To find mass using triple integral, we need:|Volume only|Boundary only|Density function|Density and area|C
+7|Triple Integration|Medium|Triple integral is useful when function depends on:|Two variables|Three variables|One variable|None of the above|B
+8|Triple Integration|Medium|For spherical coordinates, x = ?|ρ sinφ cosθ|ρ cosφ sinθ|ρ sinθ cosφ|ρ cosθ cosφ|A
+9|Triple Integration|Medium|To integrate over hemisphere, which coordinate system is most convenient?|Cartesian|Spherical|Cylindrical|Polar|B
+10|Triple Integration|Medium|In ∭ f(x,y,z) dV, dV represents:|Vector field|Density|Volume element|Mass element|C
+1|Triple Integration|Hard|Volume of sphere of radius R using triple integral in spherical coordinates is:|∫₀²π∫₀π∫₀R ρ² sinφ dρ dφ dθ|∫₀R∫₀π∫₀²π ρ² sinφ dρ dθ dφ|∫₀²π∫₀π∫₀R sinφ dρ dθ dφ|∫₀²π∫₀R∫₀π ρ² sinφ dρ dφ dθ|A
+2|Triple Integration|Hard|If f(x,y,z)=x²+y²+z² over unit cube, value is:|1|3|1.5|0.5|C
+3|Triple Integration|Hard|In spherical coordinates, what does φ represent?|Radius|Azimuthal angle|Polar angle|Vertical distance|C
+4|Triple Integration|Hard|∭ ρ² sinφ dρ dφ dθ is volume element in which system?|Cartesian|Cylindrical|Spherical|Polar|C
+5|Triple Integration|Hard|For integration over cylinder, cylindrical coordinates are preferred because:|They simplify limits|They complicate function|They are longer|They avoid calculus|A
+6|Triple Integration|Hard|To change Cartesian to cylindrical: z = ?|z|r sinθ|r|zr|A
+7|Triple Integration|Hard|Triple integral ∭(x + y + z) dV over [0,1] is:|3/2|1|1.5|2|C
+8|Triple Integration|Hard|Which formula gives volume by triple integration?|∭ 1 dV|∭ f(x) dx|∬ dx dy|∫ dx|A
+9|Triple Integration|Hard|What is required for evaluating a triple integral?|Continuous function only|Proper limits only|Both A and B|None|C
+10|Triple Integration|Hard|In cylindrical coords, r = √(x² + y²), z = z, θ =?|tan⁻¹(y/x)|cos⁻¹(y/x)|sin⁻¹(x/y)|rθ|A
