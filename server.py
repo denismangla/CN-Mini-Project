@@ -212,6 +212,44 @@ def handle_client(conn, addr):
                 username = req["username"]
                 print(f"[LOGOUT] {username}")
 
+            
+            elif req_type == "get_leaderboard":
+
+                entries = []
+
+                if os.path.exists("user_stats.csv"):
+
+                    with open("user_stats.csv", "r") as f:
+                        reader = csv.reader(f)
+
+                        for row in reader:
+                            if len(row) < 4:
+                                continue
+
+                            username = row[0]
+                            correct = int(row[1])
+                            incorrect = int(row[2])
+                            skipped = int(row[3])
+
+                            score = correct - incorrect
+
+                            entries.append((score, correct, skipped, username))
+
+                entries.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
+
+                leaderboard = []
+
+                for i, entry in enumerate(entries[:3], 1):
+                    leaderboard.append({
+                        "rank": i,
+                        "username": entry[3],
+                        "score": entry[0]
+                    })
+
+                conn.send(json.dumps({
+                    "leaderboard": leaderboard
+                }).encode())
+
 
             else:
                 print("[UNKNOWN REQUEST]", req)

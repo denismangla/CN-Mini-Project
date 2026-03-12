@@ -70,25 +70,19 @@ def get_user_rank(username):
     return 0
 
 def show_leaderboard():
-    entries = []
-    if not os.path.exists(STATS_FILE):
-        print("No stats available yet.\n")
+
+    leaderboard = client.get_leaderboard()
+
+    if not leaderboard:
+        print("No leaderboard data available.\n")
         return
-    with open(STATS_FILE, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            if len(row) < 4: continue
-            u, c, i, s = row[0], int(row[1]), int(row[2]), int(row[3])
-            net = c - i
-            entries.append((net, c, s, u))
-    if not entries:
-        print("No user data to show.\n")
-        return
-    entries.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
+
     print("\n===== Leaderboard (Top 3) =====")
     print(f"{'#':<3} {'Username':<15} {'Score':<6}")
-    for i, (net, _, _, u) in enumerate(entries[:3], 1):
-        print(f"{i:<3} {u:<15} {net:<6}")
+
+    for entry in leaderboard:
+        print(f"{entry['rank']:<3} {entry['username']:<15} {entry['score']:<6}")
+
     print("================================")
 
 def signup():
