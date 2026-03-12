@@ -216,6 +216,7 @@ def run_quiz(username, stats):
     stats.total_correct   += quiz_c
     stats.total_incorrect += quiz_w
     stats.total_skipped   += quiz_s
+    save_user_stats(stats)
     client.save_stats(username, quiz_c, quiz_w, quiz_s)
 
     ans = input("\nDo you want to review your answers? (Y/N): ").strip().upper()
