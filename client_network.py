@@ -3,7 +3,7 @@ import ssl
 import json
 from quiz import MCQ
 
-SERVER_IP = "10.14.142.166"   # change if server IP changes
+SERVER_IP = "10.1.16.128"   # change if server IP changes
 PORT = 5000
 
 

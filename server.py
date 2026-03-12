@@ -29,17 +29,24 @@ def authenticate(username, password):
 # -----------------------------
 def register_user(username, password):
 
-    # check if user already exists
-    with open("users.txt", "r", encoding="utf-8") as f:
-        reader = csv.reader(f)
+    USERS_FILE = "users.txt"
 
-        for row in reader:
-            if row[0] == username:
+    # create file if it doesn't exist
+    if not os.path.exists(USERS_FILE):
+        open(USERS_FILE, "w").close()
+
+    # check if username already exists
+    with open(USERS_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            stored = line.split(",", 1)[0].strip()
+            if stored == username:
                 return "exists"
 
-    # add new user
-    with open("users.txt", "a", encoding="utf-8") as f:
+    # save new user
+    with open(USERS_FILE, "a", encoding="utf-8") as f:
         f.write(f"{username},{password}\n")
+
+    print("User saved on server:", username)
 
     return "success"
 
@@ -99,26 +106,40 @@ def load_quiz(topic, difficulty):
 # -----------------------------
 def handle_client(conn, addr):
 
-    print("Client connected:", addr)
+    print(f"[CONNECTED] {addr}")
 
     try:
 
         while True:
 
-            data = conn.recv(4096).decode()
+            data = conn.recv(4096)
 
+            # client disconnected
             if not data:
+                print(f"[DISCONNECTED] {addr}")
                 break
 
-            req = json.loads(data)
+            try:
+                req = json.loads(data.decode())
+            except Exception as e:
+                print("Invalid JSON received:", e)
+                continue
 
-            # LOGIN
-            if req["type"] == "login":
+            req_type = req.get("type")
 
-                username = req["username"]
-                password = req["password"]
+            print(f"[REQUEST] {req_type} from {addr}")
+
+            # -------------------------
+            # LOGIN REQUEST
+            # -------------------------
+            if req_type == "login":
+
+                username = req.get("username")
+                password = req.get("password")
 
                 if authenticate(username, password):
+
+                    print(f"[LOGIN SUCCESS] {username}")
 
                     conn.send(json.dumps({
                         "status": "success"
@@ -126,27 +147,43 @@ def handle_client(conn, addr):
 
                 else:
 
+                    print(f"[LOGIN FAILED] {username}")
+
                     conn.send(json.dumps({
                         "status": "fail"
                     }).encode())
 
-            # SIGNUP
-            elif req["type"] == "signup":
+            # -------------------------
+            # SIGNUP REQUEST
+            # -------------------------
+            elif req_type == "signup":
 
-                username = req["username"]
-                password = req["password"]
+                username = req.get("username")
+                password = req.get("password")
+
+                print(f"[SIGNUP REQUEST] {username}")
 
                 result = register_user(username, password)
+
+                if result == "success":
+                    print(f"[NEW USER SAVED] {username}")
+
+                elif result == "exists":
+                    print(f"[USER ALREADY EXISTS] {username}")
 
                 conn.send(json.dumps({
                     "status": result
                 }).encode())
 
-            # REQUEST QUIZ
-            elif req["type"] == "get_quiz":
+            # -------------------------
+            # QUIZ REQUEST
+            # -------------------------
+            elif req_type == "get_quiz":
 
-                topic = req["topic"]
-                difficulty = req["difficulty"]
+                topic = req.get("topic")
+                difficulty = req.get("difficulty")
+
+                print(f"[QUIZ REQUEST] Topic={topic} Difficulty={difficulty}")
 
                 questions = load_quiz(topic, difficulty)
 
@@ -154,12 +191,15 @@ def handle_client(conn, addr):
                     "questions": questions
                 }).encode())
 
+            else:
+                print("[UNKNOWN REQUEST]", req)
+
     except Exception as e:
-        print("Error:", e)
+        print(f"[ERROR] {addr} -> {e}")
 
-    conn.close()
-    print("Client disconnected:", addr)
-
+    finally:
+        conn.close()
+        print(f"[CONNECTION CLOSED] {addr}")
 
 # -----------------------------
 # START SERVER
