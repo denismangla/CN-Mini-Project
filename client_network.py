@@ -117,18 +117,6 @@ class QuizClient:
 
         self.conn.send(json.dumps(req).encode())
     
-    def get_leaderboard(self):
-
-        req = {
-            "type": "get_leaderboard"
-        }
-
-        self.conn.send(json.dumps(req).encode())
-
-        res = json.loads(self.conn.recv(4096).decode())
-
-        return res["leaderboard"]
-    
 
     def get_user_stats(self, username):
 
