@@ -4,6 +4,7 @@ import threading
 import json
 import csv
 from quiz import load_questions
+import os
 
 HOST = "0.0.0.0"
 PORT = 5000
@@ -190,6 +191,27 @@ def handle_client(conn, addr):
                 conn.send(json.dumps({
                     "questions": questions
                 }).encode())
+
+            # -------------------------
+            # SAVE STATS REQUEST
+            # -------------------------
+            elif req_type == "save_stats":
+
+                username = req.get("username")
+                correct = req.get("correct")
+                wrong = req.get("wrong")
+                skipped = req.get("skipped")
+
+                with open("user_stats.csv", "a") as f:
+                    f.write(f"{username},{correct},{wrong},{skipped}\n")
+
+                print(f"[STATS SAVED] {username}")
+            
+            elif req_type == "logout":
+
+                username = req["username"]
+                print(f"[LOGOUT] {username}")
+
 
             else:
                 print("[UNKNOWN REQUEST]", req)

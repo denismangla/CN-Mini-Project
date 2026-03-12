@@ -94,60 +94,47 @@ def show_leaderboard():
 def signup():
     clear_screen()
     print("=== Sign Up ===\n")
-    
+
     username = input("Choose a username: ").strip()
+
     if not username:
         print("\nUsername cannot be empty.")
         pause_and_clear(2)
         return
 
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            for line in f:
-                stored = line.split(',', 1)[0].strip()
-                if stored == username:
-                    print(f"\nUsername '{username}' already exists.")
-                    pause_and_clear(2.5)
-                    return
-
     while True:
+
         password = get_hidden_password("Choose a password: ")
-        if not password:
-            print("\nPassword cannot be empty.")
+        confirm = get_hidden_password("Confirm password: ")
+
+        if password != confirm:
+            print("\nPasswords do not match.")
             pause_and_clear(2)
             return
 
-        confirm = get_hidden_password("Confirm password: ")
-        if password == confirm:
-            with open(USERS_FILE, 'a', encoding='utf-8') as f:
-                f.write(f"{username},{password}\n")
+        status = client.signup(username, password)
+
+        if status == "exists":
+            print(f"\nUsername '{username}' already exists.")
+        elif status == "success":
             print(f"\nSignup successful! You can now log in as {username}.")
-            pause_and_clear(2.5)
-            return
         else:
-            print("\nPasswords do not match. Please try again.")
-            pause_and_clear(2)
-            return
+            print("\nSignup failed.")
+
+        pause_and_clear(2)
+        return
           
 def login():
     clear_screen()
     print("=== Log In ===\n")
-    
+
     username = input("Enter username: ").strip()
     password = get_hidden_password("Enter password: ")
-    
-    if not os.path.exists(USERS_FILE):
-        print("\nNo users registered yet.")
-        pause_and_clear(2)
-        return None
 
-    with open(USERS_FILE, 'r', encoding='utf-8') as f:
-        for line in f:
-            u, p = line.strip().split(',', 1)
-            if client.login(username, password):
-                print(f"\nLogin successful! Welcome back, {username}.")
-                pause_and_clear(1.5)
-                return username
+    if client.login(username, password):
+        print(f"\nLogin successful! Welcome back, {username}.")
+        pause_and_clear(1.5)
+        return username
 
     print("\nInvalid username or password.")
     pause_and_clear(2)
@@ -235,7 +222,7 @@ def run_quiz(username, stats):
     stats.total_correct   += quiz_c
     stats.total_incorrect += quiz_w
     stats.total_skipped   += quiz_s
-    save_user_stats(stats)
+    client.save_stats(username, quiz_c, quiz_w, quiz_s)
 
     ans = input("\nDo you want to review your answers? (Y/N): ").strip().upper()
     if ans == 'Y':
@@ -292,7 +279,7 @@ def user_menu(username):
             show_leaderboard()
             input("\nPress Enter to return...")
         elif choice == '4':
-            save_user_stats(stats)
+            client.logout(username)
             clear_screen()
             print(f"Goodbye, {username}! | Logged Out Successfully.")
             pause_and_clear(1.8)

@@ -3,7 +3,7 @@ import ssl
 import json
 from quiz import MCQ
 
-SERVER_IP = "10.1.16.128"   # change if server IP changes
+SERVER_IP = "10.1.17.90"   # change if server IP changes
 PORT = 5000
 
 
@@ -56,6 +56,8 @@ class QuizClient:
         res = json.loads(self.conn.recv(4096).decode())
 
         return res["status"]
+    
+
 
 
     # -----------------------------
@@ -92,3 +94,25 @@ class QuizClient:
             questions.append(question_obj)
 
         return questions
+
+
+    def save_stats(self, username, correct, wrong, skipped):
+
+        req = {
+            "type": "save_stats",
+            "username": username,
+            "correct": correct,
+            "wrong": wrong,
+            "skipped": skipped
+        }
+
+        self.conn.send(json.dumps(req).encode())
+
+    def logout(self, username):
+
+        req = {
+            "type": "logout",
+            "username": username
+        }
+
+        self.conn.send(json.dumps(req).encode())
