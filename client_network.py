@@ -3,7 +3,7 @@ import ssl
 import json
 from quiz import MCQ
 
-SERVER_IP = "192.168.56.1"
+SERVER_IP = "10.14.142.166"   # change if server IP changes
 PORT = 5000
 
 
@@ -22,9 +22,9 @@ class QuizClient:
         self.conn.connect((SERVER_IP, PORT))
 
 
-    # -----------------------
+    # -----------------------------
     # LOGIN
-    # -----------------------
+    # -----------------------------
     def login(self, username, password):
 
         req = {
@@ -40,9 +40,27 @@ class QuizClient:
         return res["status"] == "success"
 
 
-    # -----------------------
+    # -----------------------------
+    # SIGNUP
+    # -----------------------------
+    def signup(self, username, password):
+
+        req = {
+            "type": "signup",
+            "username": username,
+            "password": password
+        }
+
+        self.conn.send(json.dumps(req).encode())
+
+        res = json.loads(self.conn.recv(4096).decode())
+
+        return res["status"]
+
+
+    # -----------------------------
     # GET QUIZ QUESTIONS
-    # -----------------------
+    # -----------------------------
     def get_quiz(self, topic, difficulty):
 
         req = {

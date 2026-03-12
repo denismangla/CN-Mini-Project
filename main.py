@@ -127,7 +127,8 @@ def signup():
         else:
             print("\nPasswords do not match. Please try again.")
             pause_and_clear(2)
-
+            return
+          
 def login():
     clear_screen()
     print("=== Log In ===\n")

@@ -10,11 +10,11 @@ PORT = 5000
 
 
 # -----------------------------
-# USER LOGIN
+# USER AUTHENTICATION
 # -----------------------------
 def authenticate(username, password):
 
-    with open("users.txt", "r") as f:
+    with open("users.txt", "r", encoding="utf-8") as f:
         reader = csv.reader(f)
 
         for row in reader:
@@ -25,7 +25,27 @@ def authenticate(username, password):
 
 
 # -----------------------------
-# LOAD QUESTIONS
+# USER REGISTRATION
+# -----------------------------
+def register_user(username, password):
+
+    # check if user already exists
+    with open("users.txt", "r", encoding="utf-8") as f:
+        reader = csv.reader(f)
+
+        for row in reader:
+            if row[0] == username:
+                return "exists"
+
+    # add new user
+    with open("users.txt", "a", encoding="utf-8") as f:
+        f.write(f"{username},{password}\n")
+
+    return "success"
+
+
+# -----------------------------
+# LOAD QUIZ QUESTIONS
 # -----------------------------
 def load_quiz(topic, difficulty):
 
@@ -60,6 +80,7 @@ def load_quiz(topic, difficulty):
     result = []
 
     for q in questions:
+
         result.append({
             "id": q.id,
             "question": q.question,
@@ -78,7 +99,7 @@ def load_quiz(topic, difficulty):
 # -----------------------------
 def handle_client(conn, addr):
 
-    print("Connected:", addr)
+    print("Client connected:", addr)
 
     try:
 
@@ -109,7 +130,19 @@ def handle_client(conn, addr):
                         "status": "fail"
                     }).encode())
 
-            # GET QUESTIONS
+            # SIGNUP
+            elif req["type"] == "signup":
+
+                username = req["username"]
+                password = req["password"]
+
+                result = register_user(username, password)
+
+                conn.send(json.dumps({
+                    "status": result
+                }).encode())
+
+            # REQUEST QUIZ
             elif req["type"] == "get_quiz":
 
                 topic = req["topic"]
@@ -118,7 +151,6 @@ def handle_client(conn, addr):
                 questions = load_quiz(topic, difficulty)
 
                 conn.send(json.dumps({
-                    "type": "quiz_data",
                     "questions": questions
                 }).encode())
 
@@ -126,7 +158,7 @@ def handle_client(conn, addr):
         print("Error:", e)
 
     conn.close()
-    print("Disconnected:", addr)
+    print("Client disconnected:", addr)
 
 
 # -----------------------------
