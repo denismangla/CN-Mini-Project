@@ -128,3 +128,17 @@ class QuizClient:
         res = json.loads(self.conn.recv(4096).decode())
 
         return res["leaderboard"]
+    
+
+    def get_user_stats(self, username):
+
+        req = {
+            "type": "get_stats",
+            "username": username
+        }
+
+        self.conn.send(json.dumps(req).encode())
+
+        res = json.loads(self.conn.recv(4096).decode())
+
+        return res

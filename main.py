@@ -254,7 +254,15 @@ def show_cumulative_performance(username, stats):
     clear_screen()
 
 def user_menu(username):
-    stats = load_user_stats(username)
+    server_stats = client.get_user_stats(username)
+
+    stats = UserStats(
+        username,
+        server_stats["correct"],
+        server_stats["incorrect"],
+        server_stats["skipped"]
+    )
+    
     while True:
         clear_screen()
         print(f"Welcome, {username}!")

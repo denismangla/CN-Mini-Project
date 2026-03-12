@@ -251,6 +251,31 @@ def handle_client(conn, addr):
                 }).encode())
 
 
+            elif req_type == "get_stats":
+
+                username = req["username"]
+
+                stats = {
+                    "correct": 0,
+                    "incorrect": 0,
+                    "skipped": 0
+                }
+
+                if os.path.exists("user_stats.csv"):
+
+                    with open("user_stats.csv", "r") as f:
+                        reader = csv.reader(f)
+
+                        for row in reader:
+                            if row[0] == username:
+                                stats["correct"] = int(row[1])
+                                stats["incorrect"] = int(row[2])
+                                stats["skipped"] = int(row[3])
+                                break
+
+                conn.send(json.dumps(stats).encode())
+
+
             else:
                 print("[UNKNOWN REQUEST]", req)
 
