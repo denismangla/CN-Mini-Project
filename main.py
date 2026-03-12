@@ -74,7 +74,7 @@ def show_leaderboard():
     leaderboard = client.get_leaderboard()
 
     if not leaderboard:
-        print("No leaderboard data available.\n")
+        print("No stats available yet.\n")
         return
 
     print("\n===== Leaderboard (Top 3) =====")
@@ -262,7 +262,7 @@ def user_menu(username):
         server_stats["incorrect"],
         server_stats["skipped"]
     )
-    
+
     while True:
         clear_screen()
         print(f"Welcome, {username}!")

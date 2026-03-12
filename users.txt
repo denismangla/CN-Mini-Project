@@ -1,6 +1,0 @@
-denis,12345
-darshan,qwerty
-denis mangla,denis
-hamza,hamza
-hamza1,hamza1
-diya,abcd

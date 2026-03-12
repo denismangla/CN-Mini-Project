@@ -103,6 +103,57 @@ def load_quiz(topic, difficulty):
 
 
 # -----------------------------
+# BUILD LEADERBOARD
+# -----------------------------
+
+def build_leaderboard():
+
+    stats = {}
+
+    if not os.path.exists("user_stats.csv"):
+        return []
+
+    with open("user_stats.csv", "r") as f:
+        reader = csv.reader(f)
+
+        for row in reader:
+            if len(row) < 4:
+                continue
+
+            username = row[0]
+            correct = int(row[1])
+            incorrect = int(row[2])
+            skipped = int(row[3])
+
+            # overwrite previous entries so latest stats remain
+            stats[username] = (correct, incorrect, skipped)
+
+    leaderboard = []
+
+    for username, data in stats.items():
+
+        correct, incorrect, skipped = data
+        score = correct - incorrect
+
+        leaderboard.append((score, correct, skipped, username))
+
+    leaderboard.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
+
+    result = []
+
+    for i, entry in enumerate(leaderboard[:3], 1):
+
+        result.append({
+            "rank": i,
+            "username": entry[3],
+            "score": entry[0]
+        })
+
+    return result
+
+
+
+# -----------------------------
 # CLIENT HANDLER
 # -----------------------------
 def handle_client(conn, addr):
@@ -197,54 +248,44 @@ def handle_client(conn, addr):
             # -------------------------
             elif req_type == "save_stats":
 
-                username = req.get("username")
-                correct = req.get("correct")
-                wrong = req.get("wrong")
-                skipped = req.get("skipped")
-
-                with open("user_stats.csv", "a") as f:
-                    f.write(f"{username},{correct},{wrong},{skipped}\n")
-
-                print(f"[STATS SAVED] {username}")
-            
-            elif req_type == "logout":
-
                 username = req["username"]
-                print(f"[LOGOUT] {username}")
+                correct = req["correct"]
+                wrong = req["wrong"]
+                skipped = req["skipped"]
+
+                rows = []
+                found = False
+
+                # Read existing stats
+                if os.path.exists("user_stats.csv"):
+                    with open("user_stats.csv", "r", newline="") as f:
+                        reader = csv.reader(f)
+                        rows = list(reader)
+
+                # Search for user
+                for row in rows:
+                    if row[0] == username:
+                        row[1] = str(int(row[1]) + correct)
+                        row[2] = str(int(row[2]) + wrong)
+                        row[3] = str(int(row[3]) + skipped)
+                        found = True
+                        break
+
+                # If user not found, add new entry
+                if not found:
+                    rows.append([username, correct, wrong, skipped])
+
+                # Write updated data back
+                with open("user_stats.csv", "w", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerows(rows)
+
+                print(f"[STATS UPDATED] {username}")
 
             
             elif req_type == "get_leaderboard":
 
-                entries = []
-
-                if os.path.exists("user_stats.csv"):
-
-                    with open("user_stats.csv", "r") as f:
-                        reader = csv.reader(f)
-
-                        for row in reader:
-                            if len(row) < 4:
-                                continue
-
-                            username = row[0]
-                            correct = int(row[1])
-                            incorrect = int(row[2])
-                            skipped = int(row[3])
-
-                            score = correct - incorrect
-
-                            entries.append((score, correct, skipped, username))
-
-                entries.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
-
-                leaderboard = []
-
-                for i, entry in enumerate(entries[:3], 1):
-                    leaderboard.append({
-                        "rank": i,
-                        "username": entry[3],
-                        "score": entry[0]
-                    })
+                leaderboard = build_leaderboard()
 
                 conn.send(json.dumps({
                     "leaderboard": leaderboard
