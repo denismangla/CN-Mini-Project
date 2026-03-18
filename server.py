@@ -5,9 +5,49 @@ import json
 import csv
 from quiz import load_questions
 import os
+import sys
+import struct
 
 HOST = "0.0.0.0"
 PORT = 5000
+
+active_connections = 0
+connection_lock = threading.Lock()
+
+waiting_players = []
+quiz_started = False
+quiz_lock = threading.Lock()
+
+
+
+def send_json(sock, data):
+    message = json.dumps(data).encode()
+    length = struct.pack("!I", len(message))
+    sock.sendall(length + message)
+
+
+def recv_json(sock):
+    raw_length = sock.recv(4)
+
+    if not raw_length:
+        return None
+
+    length = struct.unpack("!I", raw_length)[0]
+
+    data = b""
+
+    while len(data) < length:
+        packet = sock.recv(length - len(data))
+        if not packet:
+            return None
+        data += packet
+
+    return json.loads(data.decode())
+
+
+def show_active_connections():
+    sys.stdout.write(f"\rActive connections: {active_connections}   ")
+    sys.stdout.flush()
 
 
 # -----------------------------
@@ -152,13 +192,44 @@ def build_leaderboard():
     return result
 
 
+def start_multiplayer_quiz():
+
+    global quiz_started
+
+    with quiz_lock:
+
+        if len(waiting_players) == 0:
+            return
+
+        quiz_started = True
+
+        print("\nStarting multiplayer quiz...")
+
+        for username, conn in waiting_players:
+
+            try:
+                send_json(conn, {
+                    "type": "quiz_start",
+                    "start_time": time.time() + 5
+                })
+            except:
+                pass
+
+
 
 # -----------------------------
 # CLIENT HANDLER
 # -----------------------------
 def handle_client(conn, addr):
 
-    print(f"[CONNECTED] {addr}")
+    global active_connections
+
+    with connection_lock:
+        active_connections += 1
+
+    show_active_connections()
+
+    print(f"\n[CONNECTED] {addr}")
 
     try:
 
@@ -283,6 +354,22 @@ def handle_client(conn, addr):
                 print(f"[STATS UPDATED] {username}")
 
             
+            elif req_type == "join_multiplayer":
+
+                username = req["username"]
+
+                with quiz_lock:
+                    waiting_players.append((username, conn))
+
+                print(f"{username} joined multiplayer lobby")
+
+                send_json(conn, {
+                    "status": "waiting",
+                    "message": "Waiting for quiz to start..."
+                })
+
+
+
             elif req_type == "get_leaderboard":
 
                 leaderboard = build_leaderboard()
@@ -324,8 +411,15 @@ def handle_client(conn, addr):
         print(f"[ERROR] {addr} -> {e}")
 
     finally:
+
+        with connection_lock:
+            active_connections -= 1
+
+        show_active_connections()
+
         conn.close()
-        print(f"[CONNECTION CLOSED] {addr}")
+
+        print(f"\n[DISCONNECTED] {addr}")
 
 # -----------------------------
 # START SERVER
@@ -342,6 +436,7 @@ def start_server():
     secure_server = context.wrap_socket(server, server_side=True)
 
     print("Secure Quiz Server Running on Port", PORT)
+    print("Active connections: 0", end="")
 
     while True:
 

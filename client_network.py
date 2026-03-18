@@ -1,7 +1,35 @@
 import socket
 import ssl
 import json
+import struct
 from quiz import MCQ
+
+
+def send_json(sock, data):
+    message = json.dumps(data).encode()
+    length = struct.pack("!I", len(message))
+    sock.sendall(length + message)
+
+
+def recv_json(sock):
+    raw_length = sock.recv(4)
+
+    if not raw_length:
+        return None
+
+    length = struct.unpack("!I", raw_length)[0]
+
+    data = b""
+
+    while len(data) < length:
+        packet = sock.recv(length - len(data))
+        if not packet:
+            return None
+        data += packet
+
+    return json.loads(data.decode())
+
+
 
 SERVER_IP = "10.1.17.90"   # change if server IP changes
 PORT = 5000
