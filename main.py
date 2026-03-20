@@ -253,6 +253,53 @@ def show_cumulative_performance(username, stats):
     input("\nPress Enter to return...")
     clear_screen()
 
+
+def multiplayer_quiz(username):
+
+    clear_screen()
+    print("Joining multiplayer lobby...")
+
+    client.join_multiplayer(username)
+
+    print("Waiting for server to start the quiz...")
+
+    msg = recv_json(client.conn)
+
+    if msg["type"] == "quiz_start":
+
+        start_time = msg["start_time"]
+        duration = msg["duration"]
+
+        wait = start_time - time.time()
+
+        if wait > 0:
+            print(f"\nQuiz starts in {int(wait)} seconds...")
+            time.sleep(wait)
+
+        print("\n=== QUIZ STARTED ===")
+
+        questions = client.get_quiz("D", "A")  # default topic
+
+        start = time.time()
+
+        for q in questions:
+
+            if time.time() - start >= duration:
+                print("\nTime's up!")
+                break
+
+            ask_question(q, start, duration)
+
+        print("\nWaiting for server to end quiz...")
+
+        end_msg = recv_json(client.conn)
+
+        if end_msg and end_msg.get("type") == "quiz_end":
+            print("\nQuiz ended by server!")
+
+        input("\nPress Enter to return...")
+
+
 def user_menu(username):
     server_stats = client.get_user_stats(username)
 
@@ -308,6 +355,7 @@ def main():
         print("2. Sign Up (New User)")
         print("3. Admin Login")
         print("4. Exit")
+        print("5. Multiplayer Quiz")
         choice = input("\nEnter your choice: ").strip()
 
         if choice == '1':
@@ -327,6 +375,9 @@ def main():
             print("\nAll the Best!\n")
             pause_and_clear(1.5)
             sys.exit(0)
+
+        elif choice == '5':
+            multiplayer_quiz(username)
 
         else:
             print("\nInvalid choice. Try again.\n")

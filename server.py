@@ -7,6 +7,7 @@ from quiz import load_questions
 import os
 import sys
 import struct
+import time
 
 HOST = "0.0.0.0"
 PORT = 5000
@@ -17,6 +18,8 @@ connection_lock = threading.Lock()
 waiting_players = []
 quiz_started = False
 quiz_lock = threading.Lock()
+quiz_end_time = None
+QUIZ_DURATION = 60  # seconds
 
 
 
@@ -194,7 +197,7 @@ def build_leaderboard():
 
 def start_multiplayer_quiz():
 
-    global quiz_started
+    global quiz_started, quiz_end_time
 
     with quiz_lock:
 
@@ -203,17 +206,48 @@ def start_multiplayer_quiz():
 
         quiz_started = True
 
-        print("\nStarting multiplayer quiz...")
+        start_time = time.time() + 5
+        quiz_end_time = start_time + QUIZ_DURATION
+
+        print("\n[QUIZ STARTING IN 5 SECONDS]")
 
         for username, conn in waiting_players:
-
             try:
                 send_json(conn, {
                     "type": "quiz_start",
-                    "start_time": time.time() + 5
+                    "start_time": start_time,
+                    "duration": QUIZ_DURATION
                 })
             except:
                 pass
+
+
+def quiz_timer_monitor():
+
+    global quiz_started, waiting_players
+
+    while True:
+
+        if quiz_started and quiz_end_time:
+
+            if time.time() >= quiz_end_time:
+
+                print("\n[QUIZ ENDED BY SERVER]")
+
+                with quiz_lock:
+
+                    for username, conn in waiting_players:
+                        try:
+                            send_json(conn, {
+                                "type": "quiz_end"
+                            })
+                        except:
+                            pass
+
+                    waiting_players.clear()
+                    quiz_started = False
+
+        time.sleep(1)
 
 
 
@@ -355,6 +389,8 @@ def handle_client(conn, addr):
 
             
             elif req_type == "join_multiplayer":
+                if len(waiting_players) >= 2:
+                    start_multiplayer_quiz()
 
                 username = req["username"]
 
@@ -437,6 +473,8 @@ def start_server():
 
     print("Secure Quiz Server Running on Port", PORT)
     print("Active connections: 0", end="")
+
+    threading.Thread(target=quiz_timer_monitor, daemon=True).start()
 
     while True:
 

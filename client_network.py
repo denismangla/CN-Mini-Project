@@ -61,9 +61,9 @@ class QuizClient:
             "password": password
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
-        res = json.loads(self.conn.recv(4096).decode())
+        res = recv_json(self.conn)
 
         return res["status"] == "success"
 
@@ -79,9 +79,9 @@ class QuizClient:
             "password": password
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
-        res = json.loads(self.conn.recv(4096).decode())
+        res = recv_json(self.conn)
 
         return res["status"]
     
@@ -99,9 +99,9 @@ class QuizClient:
             "difficulty": difficulty
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
-        res = json.loads(self.conn.recv(4096).decode())
+        res = recv_json(self.conn)
 
         questions = []
 
@@ -134,7 +134,7 @@ class QuizClient:
             "skipped": skipped
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
     def logout(self, username):
 
@@ -143,7 +143,7 @@ class QuizClient:
             "username": username
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
     
 
     def get_user_stats(self, username):
@@ -153,9 +153,9 @@ class QuizClient:
             "username": username
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
-        res = json.loads(self.conn.recv(4096).decode())
+        res = recv_json(self.conn)
 
         return res
     
@@ -166,8 +166,17 @@ class QuizClient:
             "type": "get_leaderboard"
         }
 
-        self.conn.send(json.dumps(req).encode())
+        send_json(self.conn, req)
 
-        res = json.loads(self.conn.recv(4096).decode())
+        res = recv_json(self.conn)
 
         return res["leaderboard"]
+    
+    def join_multiplayer(self, username):
+
+        send_json(self.conn, {
+            "type": "join_multiplayer",
+            "username": username
+        })
+
+        return recv_json(self.conn)
