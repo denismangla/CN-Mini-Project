@@ -51,25 +51,6 @@ def get_hidden_password(prompt="Enter password: "):
             print('*', end='', flush=True)
     return password.strip()
 
-def get_user_rank(username):
-    entries = []
-    if not os.path.exists(STATS_FILE):
-        return 0
-    with open(STATS_FILE, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f)
-        for row in reader:
-            if len(row) < 4: continue
-            u, c, i, s = row[0], int(row[1]), int(row[2]), int(row[3])
-            net = c - i
-            entries.append((net, c, s, u))
-    if not entries:
-        return 0
-    entries.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
-    for rank, (_, _, _, u) in enumerate(entries, 1):
-        if u == username:
-            return rank
-    return 0
-
 def show_leaderboard():
 
     leaderboard = client.get_leaderboard()
@@ -227,7 +208,7 @@ def run_quiz(username, stats):
     input("\nPress Enter to return to menu...")
     clear_screen()
 
-def show_cumulative_performance(username, stats):
+def show_cumulative_performance(username, stats, server_stats):
     clear_screen()
     print(f"\nYour all-time totals ({username}):")
     print(f"  Correct   : {stats.total_correct}")
@@ -245,7 +226,7 @@ def show_cumulative_performance(username, stats):
         perc = (stats.total_correct * 100) // total_q if total_q > 0 else 0
         print(f"  Percentage: {perc}%")
 
-    rank = get_user_rank(username)
+    rank = server_stats.get("rank", 0)
     if rank > 0:
         print(f"  Your rank : {rank}")
     else:
@@ -260,13 +241,17 @@ def multiplayer_quiz(username):
     clear_screen()
     print("Joining multiplayer lobby...")
 
-    client.join_multiplayer(username)
+    response = client.join_multiplayer(username)
 
-    print("Waiting for server to start the quiz...")
+    print(response.get("message", "Waiting for quiz to start..."))
 
     msg = recv_json(client.conn)
 
-    if msg["type"] == "quiz_start":
+    if not msg:
+        print("Server disconnected!")
+        return
+
+    if msg.get("type") == "quiz_start":
 
         start_time = msg["start_time"]
         duration = msg["duration"]
@@ -325,7 +310,7 @@ def user_menu(username):
         if choice == '1':
             run_quiz(username, stats)
         elif choice == '2':
-            show_cumulative_performance(username, stats)
+            show_cumulative_performance(username, stats, server_stats)
         elif choice == '3':
             clear_screen()
             show_leaderboard()

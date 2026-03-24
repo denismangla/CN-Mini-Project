@@ -201,6 +201,9 @@ def start_multiplayer_quiz():
 
     with quiz_lock:
 
+        if quiz_started:
+            return
+
         if len(waiting_players) == 0:
             return
 
@@ -261,27 +264,20 @@ def handle_client(conn, addr):
     with connection_lock:
         active_connections += 1
 
+    print(f"\n[CONNECTED] {addr}")
+
     show_active_connections()
 
-    print(f"\n[CONNECTED] {addr}")
 
     try:
 
         while True:
 
-            data = conn.recv(4096)
+            req = recv_json(conn)
 
-            # client disconnected
-            if not data:
+            if not req:
                 print(f"[DISCONNECTED] {addr}")
                 break
-
-            try:
-                req = json.loads(data.decode())
-            except Exception as e:
-                print("Invalid JSON received:", e)
-                continue
-
             req_type = req.get("type")
 
             print(f"[REQUEST] {req_type} from {addr}")
@@ -298,17 +294,13 @@ def handle_client(conn, addr):
 
                     print(f"[LOGIN SUCCESS] {username}")
 
-                    conn.send(json.dumps({
-                        "status": "success"
-                    }).encode())
+                    send_json(conn, {"status": "success"})
 
                 else:
 
                     print(f"[LOGIN FAILED] {username}")
 
-                    conn.send(json.dumps({
-                        "status": "fail"
-                    }).encode())
+                    send_json(conn, {"status": "fail"})
 
             # -------------------------
             # SIGNUP REQUEST
@@ -328,9 +320,7 @@ def handle_client(conn, addr):
                 elif result == "exists":
                     print(f"[USER ALREADY EXISTS] {username}")
 
-                conn.send(json.dumps({
-                    "status": result
-                }).encode())
+                send_json(conn, {"status": result})
 
             # -------------------------
             # QUIZ REQUEST
@@ -344,9 +334,7 @@ def handle_client(conn, addr):
 
                 questions = load_quiz(topic, difficulty)
 
-                conn.send(json.dumps({
-                    "questions": questions
-                }).encode())
+                send_json(conn, {"questions": questions})
 
             # -------------------------
             # SAVE STATS REQUEST
@@ -389,7 +377,15 @@ def handle_client(conn, addr):
 
             
             elif req_type == "join_multiplayer":
+
                 username = req["username"]
+
+                if quiz_started:
+                    send_json(conn, {
+                        "status": "started",
+                        "message": "Quiz already started. Try later."
+                    })
+                    continue
 
                 with quiz_lock:
                     waiting_players.append((username, conn))
@@ -411,9 +407,7 @@ def handle_client(conn, addr):
 
                 leaderboard = build_leaderboard()
 
-                conn.send(json.dumps({
-                    "leaderboard": leaderboard
-                }).encode())
+                send_json(conn, {"leaderboard": leaderboard})
 
 
             elif req_type == "get_stats":
@@ -432,13 +426,35 @@ def handle_client(conn, addr):
                         reader = csv.reader(f)
 
                         for row in reader:
-                            if row[0] == username:
+                            if len(row) >= 4 and row[0] == username:
                                 stats["correct"] = int(row[1])
                                 stats["incorrect"] = int(row[2])
                                 stats["skipped"] = int(row[3])
                                 break
 
-                conn.send(json.dumps(stats).encode())
+                # Calculate rank
+                rank = 0
+                if os.path.exists("user_stats.csv"):
+                    entries = []
+                    with open("user_stats.csv", "r") as f:
+                        reader = csv.reader(f)
+                        for row in reader:
+                            if len(row) >= 4:
+                                u = row[0]
+                                c = int(row[1])
+                                i = int(row[2])
+                                s = int(row[3])
+                                net = c - i
+                                entries.append((net, c, s, u))
+                    if entries:
+                        entries.sort(key=lambda x: (-x[0], -x[1], x[2], x[3]))
+                        for r, (_, _, _, u) in enumerate(entries, 1):
+                            if u == username:
+                                rank = r
+                                break
+                stats["rank"] = rank
+
+                send_json(conn, stats)
 
 
             else:
@@ -452,11 +468,12 @@ def handle_client(conn, addr):
         with connection_lock:
             active_connections -= 1
 
-        show_active_connections()
 
         conn.close()
 
         print(f"\n[DISCONNECTED] {addr}")
+
+        show_active_connections()
 
 # -----------------------------
 # START SERVER
@@ -473,7 +490,7 @@ def start_server():
     secure_server = context.wrap_socket(server, server_side=True)
 
     print("Secure Quiz Server Running on Port", PORT)
-    print("Active connections: 0", end="")
+    print("Active connections: 0")
 
     threading.Thread(target=quiz_timer_monitor, daemon=True).start()
 
