@@ -41,7 +41,8 @@ PORT = 5000
 QUIZ_DURATION = 60  # seconds
 selected_topic = "D"
 selected_difficulty = "A"
-NUM_QUESTIONS = 5
+selected_num_questions = 5
+mp_active_clients = []
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  SERVER STATE (shared across threads — protected by locks)
@@ -166,7 +167,11 @@ def start_multiplayer_quiz():
         start_time    = time.time() + 5
         quiz_end_time = start_time + QUIZ_DURATION
         log(f"[MP] Quiz starting! Players: {len(waiting_players)}")
+        global mp_active_clients
+        mp_active_clients = []
+
         for username, conn in waiting_players:
+            mp_active_clients.append(conn)
             try:
                 send_json(conn, {
                     "type": "quiz_start",
@@ -174,7 +179,7 @@ def start_multiplayer_quiz():
                     "duration": QUIZ_DURATION,
                     "topic": selected_topic,
                     "difficulty": selected_difficulty,
-                    "num_questions": NUM_QUESTIONS
+                    "num_questions": selected_num_questions
                 })
             except Exception:
                 pass
@@ -188,7 +193,7 @@ def quiz_timer_monitor():
             if time.time() >= quiz_end_time:
                 log("[MP] Quiz ended by server.")
                 with quiz_lock:
-                    for _, conn in waiting_players:
+                    for conn in mp_active_clients:
                         try:
                             send_json(conn, {"type": "quiz_end"})
                         except Exception:
@@ -676,12 +681,15 @@ class ServerApp(tk.Tk):
         global quiz_started, quiz_end_time, waiting_players
         with quiz_lock:
             log("[MP] Quiz ended manually by admin.")
-            for _, conn in waiting_players:
+            global mp_active_clients
+
+            for conn in mp_active_clients:
                 try:
                     send_json(conn, {"type": "quiz_end"})
-                except Exception:
+                except:
                     pass
             waiting_players = []
+            mp_active_clients = []
             quiz_started    = False
             quiz_end_time   = None
         self.refresh_lobby()

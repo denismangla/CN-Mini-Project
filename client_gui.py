@@ -734,6 +734,7 @@ class App(tk.Tk):
 
                 topic = msg.get("topic", "D")
                 difficulty = msg.get("difficulty", "A")
+                num_questions = msg.get("num_questions", 10)
 
                 wait       = start_time - time.time()
 
@@ -745,15 +746,16 @@ class App(tk.Tk):
                     else:
                         self.after(0, lambda: [
                             progress.stop(),
-                            self._launch_mp_quiz(duration, topic, difficulty)
+                            self._launch_mp_quiz(duration, topic, difficulty, num_questions)
                         ])
 
                 self.after(0, lambda: countdown(max(0, int(wait))))
 
         threading.Thread(target=join_thread, daemon=True).start()
 
-    def _launch_mp_quiz(self, duration, topic, difficulty):
-        questions = self.client.get_quiz(topic, difficulty)
+    def _launch_mp_quiz(self, duration, topic, difficulty, num_questions):
+        questions = self.client.get_quiz(topic, difficulty, num_questions)
+        questions = questions[:num_questions]
         
         if not questions:
             messagebox.showinfo("Multiplayer", "No questions received.")
