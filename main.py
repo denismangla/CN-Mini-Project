@@ -1,4 +1,5 @@
 from client_network import QuizClient
+from client_network import recv_json
 
 client = QuizClient()
 
@@ -317,8 +318,9 @@ def user_menu(username):
         print("1. Give Test")
         print("2. Cumulative Performance")
         print("3. View Leaderboard")
-        print("4. Logout")
-        choice = input("\nEnter choice (1-4): ").strip()
+        print("4. Multiplayer Quiz")
+        print("5. Logout")
+        choice = input("\nEnter choice (1-5): ").strip()
 
         if choice == '1':
             run_quiz(username, stats)
@@ -329,11 +331,15 @@ def user_menu(username):
             show_leaderboard()
             input("\nPress Enter to return...")
         elif choice == '4':
+            multiplayer_quiz(username)
+        elif choice == '5':
             client.logout(username)
             clear_screen()
             print(f"Goodbye, {username}! | Logged Out Successfully.")
             pause_and_clear(1.8)
             return
+        
+
         else:
             print("\nInvalid choice, try again.")
             pause_and_clear(1.2)
@@ -355,7 +361,6 @@ def main():
         print("2. Sign Up (New User)")
         print("3. Admin Login")
         print("4. Exit")
-        print("5. Multiplayer Quiz")
         choice = input("\nEnter your choice: ").strip()
 
         if choice == '1':
@@ -375,9 +380,6 @@ def main():
             print("\nAll the Best!\n")
             pause_and_clear(1.5)
             sys.exit(0)
-
-        elif choice == '5':
-            multiplayer_quiz(username)
 
         else:
             print("\nInvalid choice. Try again.\n")

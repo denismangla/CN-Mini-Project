@@ -389,15 +389,16 @@ def handle_client(conn, addr):
 
             
             elif req_type == "join_multiplayer":
-                if len(waiting_players) >= 2:
-                    start_multiplayer_quiz()
-
                 username = req["username"]
 
                 with quiz_lock:
                     waiting_players.append((username, conn))
 
                 print(f"{username} joined multiplayer lobby")
+
+                # AFTER adding player
+                if len(waiting_players) >= 2:
+                    start_multiplayer_quiz()
 
                 send_json(conn, {
                     "status": "waiting",
