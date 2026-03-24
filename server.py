@@ -19,7 +19,7 @@ waiting_players = []
 quiz_started = False
 quiz_lock = threading.Lock()
 quiz_end_time = None
-QUIZ_DURATION = 60  # seconds
+QUIZ_DURATION = 60  # second
 
 
 
