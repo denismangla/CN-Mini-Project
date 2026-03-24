@@ -181,7 +181,6 @@ def start_multiplayer_quiz():
     if _app:
         _app.refresh_lobby()
 
-
 def quiz_timer_monitor():
     global quiz_started, waiting_players
     while True:
