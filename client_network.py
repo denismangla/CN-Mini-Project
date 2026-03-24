@@ -38,10 +38,10 @@ PORT = 5000
 class QuizClient:
 
     def __init__(self):
-
-        context = ssl.create_default_context()
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -172,11 +172,19 @@ class QuizClient:
 
         return res["leaderboard"]
     
-    def join_multiplayer(self, username):
+    def join_multiplayer(self, username, topic=None, difficulty=None):
 
-        send_json(self.conn, {
+        req = {
             "type": "join_multiplayer",
             "username": username
-        })
+        }
+
+        # optional (not required but useful)
+        if topic:
+            req["topic"] = topic
+        if difficulty:
+            req["difficulty"] = difficulty
+
+        send_json(self.conn, req)
 
         return recv_json(self.conn)
