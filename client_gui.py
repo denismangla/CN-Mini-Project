@@ -46,7 +46,7 @@ def styled_btn(parent, text, command, width=18, bg=ACCENT, **kw):
     b = tk.Button(parent, text=text, command=command,
                   bg=bg, fg=BTN_FG, activebackground=BTN_ACTIVE,
                   activeforeground=BTN_FG, relief="flat", bd=0,
-                  font=("Consolas", 10, "bold"), width=width,
+                  font=("Consolas", 12, "bold"), width=width,
                   padx=8, pady=6, cursor="hand2", **kw)
     b.bind("<Enter>", lambda e: b.config(bg=BTN_ACTIVE if bg == ACCENT else bg))
     b.bind("<Leave>", lambda e: b.config(bg=bg))
@@ -56,7 +56,7 @@ def styled_btn(parent, text, command, width=18, bg=ACCENT, **kw):
 def entry_widget(parent, show="", width=28):
     e = tk.Entry(parent, show=show, width=width,
                  bg=PANEL, fg=TEXT, insertbackground=ACCENT,
-                 relief="flat", bd=0, font=("Consolas", 11),
+                 relief="flat", bd=0, font=("Consolas", 13),
                  highlightthickness=1, highlightbackground=BORDER,
                  highlightcolor=ACCENT)
     return e
@@ -66,7 +66,7 @@ def label(parent, text, size=11, color=TEXT, bold=False, **kw):
     weight = "bold" if bold else "normal"
     return tk.Label(parent, text=text,
                     bg=parent["bg"] if "bg" not in kw else kw.pop("bg"),
-                    fg=color, font=("Consolas", size, weight), **kw)
+                    fg=color, font=("Consolas", size + 2, weight), **kw)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -134,7 +134,7 @@ class App(tk.Tk):
         ]
         for line in logo_lines:
             tk.Label(f, text=line, bg=BG, fg=ACCENT,
-                     font=("Courier", 9, "bold")).pack(anchor="w")
+                     font=("Courier", 11, "bold")).pack(anchor="w")
 
         label(f, "Online Quiz System", 12, SUBTEXT).pack(pady=(4, 20))
 
@@ -311,23 +311,23 @@ class App(tk.Tk):
         diff_var  = tk.StringVar(value="A")
 
         tk.Label(f, text="Topic", bg=BG, fg=SUBTEXT,
-                 font=("Consolas", 10)).pack(anchor="w")
+                 font=("Consolas", 12)).pack(anchor="w")
         t_frame = tk.Frame(f, bg=BG)
         t_frame.pack(anchor="w", pady=(2, 12))
         for code, name in topics:
             tk.Radiobutton(t_frame, text=f"  {name}", variable=topic_var, value=code,
                            bg=BG, fg=TEXT, selectcolor=PANEL, activebackground=BG,
-                           font=("Consolas", 10), indicatoron=True).pack(anchor="w")
+                           font=("Consolas", 12), indicatoron=True).pack(anchor="w")
 
         tk.Label(f, text="Difficulty", bg=BG, fg=SUBTEXT,
-                 font=("Consolas", 10)).pack(anchor="w")
+                 font=("Consolas", 12)).pack(anchor="w")
         d_frame = tk.Frame(f, bg=BG)
         d_frame.pack(anchor="w", pady=(2, 16))
         diff_colors = {"A": ACCENT2, "B": WARN, "C": DANGER}
         for code, name in diffs:
             tk.Radiobutton(d_frame, text=f"  {name}", variable=diff_var, value=code,
                            bg=BG, fg=diff_colors[code], selectcolor=PANEL,
-                           activebackground=BG, font=("Consolas", 10),
+                           activebackground=BG, font=("Consolas", 12),
                            indicatoron=True).pack(anchor="w")
 
         num_var = tk.StringVar(value="10")
@@ -336,7 +336,7 @@ class App(tk.Tk):
         label(row, "No. of Questions:", bg=BG).pack(side="left")
         sp = tk.Spinbox(row, from_=1, to=10, textvariable=num_var, width=5,
                         bg=PANEL, fg=TEXT, buttonbackground=BORDER,
-                        font=("Consolas", 11), relief="flat",
+                        font=("Consolas", 13), relief="flat",
                         highlightthickness=1, highlightbackground=BORDER)
         sp.pack(side="left", padx=8)
 
@@ -408,19 +408,19 @@ class App(tk.Tk):
             row.pack(anchor="w", pady=1)
             tk.Frame(row, bg=col, width=10, height=10).pack(side="left", padx=(0, 4))
             tk.Label(row, text=txt, bg=PANEL, fg=SUBTEXT,
-                     font=("Consolas", 8)).pack(side="left")
+                     font=("Consolas", 10)).pack(side="left")
 
         tk.Frame(left_panel, bg=BORDER, height=1).pack(fill="x", padx=10, pady=4)
 
         # summary counters
         self._lbl_answered = tk.Label(left_panel, text="", bg=PANEL,
-                                      fg=ACCENT2, font=("Consolas", 9))
+                                      fg=ACCENT2, font=("Consolas", 11))
         self._lbl_answered.pack(anchor="w", padx=12)
         self._lbl_review   = tk.Label(left_panel, text="", bg=PANEL,
-                                      fg=WARN, font=("Consolas", 9))
+                                      fg=WARN, font=("Consolas", 11))
         self._lbl_review.pack(anchor="w", padx=12)
         self._lbl_unvisited = tk.Label(left_panel, text="", bg=PANEL,
-                                       fg=SUBTEXT, font=("Consolas", 9))
+                                       fg=SUBTEXT, font=("Consolas", 11))
         self._lbl_unvisited.pack(anchor="w", padx=12)
 
         tk.Frame(left_panel, bg=BORDER, height=1).pack(fill="x", padx=10, pady=6)
@@ -432,7 +432,7 @@ class App(tk.Tk):
         for i in range(len(questions)):
             btn = tk.Button(grid_f, text=str(i + 1), width=3, height=1,
                             bg=Q_UNVISITED, fg=TEXT,
-                            font=("Consolas", 9, "bold"), relief="flat",
+                            font=("Consolas", 11, "bold"), relief="flat",
                             cursor="hand2", bd=0,
                             command=lambda idx=i: self._jump_to(idx))
             btn.grid(row=i // 5, column=i % 5, padx=2, pady=2)
@@ -456,7 +456,7 @@ class App(tk.Tk):
         mid.pack(fill="both", expand=True, padx=40, pady=16)
 
         self._q_text = tk.Label(mid, text="", bg=BG, fg=TEXT,
-                                font=("Consolas", 12), wraplength=700,
+                                font=("Consolas", 14), wraplength=700,
                                 justify="left", anchor="w")
         self._q_text.pack(fill="x", pady=(0, 16))
 
@@ -468,7 +468,7 @@ class App(tk.Tk):
             rb = tk.Radiobutton(self._opt_frame, text="",
                                 variable=self._selected, value=opt,
                                 bg=BG, fg=TEXT, selectcolor=PANEL,
-                                activebackground=BG, font=("Consolas", 11),
+                                activebackground=BG, font=("Consolas", 13),
                                 anchor="w", wraplength=680, justify="left",
                                 indicatoron=False, relief="flat", bd=0,
                                 highlightthickness=1, highlightbackground=BORDER,
@@ -492,7 +492,7 @@ class App(tk.Tk):
                                    bg=Q_REVIEW, fg=BTN_FG,
                                    activebackground="#7a5200",
                                    relief="flat", bd=0,
-                                   font=("Consolas", 10, "bold"),
+                                   font=("Consolas", 12, "bold"),
                                    width=16, padx=8, pady=6, cursor="hand2")
         self._mark_btn.pack(side="left", padx=8, pady=10)
 
@@ -809,10 +809,10 @@ class App(tk.Tk):
                 opt_row.pack(fill="x", pady=2, padx=4)
 
                 tk.Label(opt_row, text=f" {prefix} {key}. ", bg=row_bg,
-                         fg=opt_fg, font=("Consolas", 10, "bold"),
+                         fg=opt_fg, font=("Consolas", 12, "bold"),
                          padx=6, pady=5).pack(side="left")
                 tk.Label(opt_row, text=opt_text, bg=row_bg, fg=opt_fg,
-                         font=("Consolas", 10), anchor="w", justify="left",
+                         font=("Consolas", 12), anchor="w", justify="left",
                          padx=4, pady=5, wraplength=650).pack(side="left", fill="x")
 
         inner.update_idletasks()
@@ -894,7 +894,7 @@ class App(tk.Tk):
         hdr = tk.Frame(card, bg=PANEL)
         hdr.pack(fill="x")
         for col_txt, w in [("#", 3), ("Username", 18), ("Score", 8)]:
-            label(hdr, col_txt, 10, SUBTEXT, True, bg=PANEL,
+            label(hdr, col_txt, 12, SUBTEXT, True, bg=PANEL,
                   width=w).pack(side="left", padx=4)
 
         tk.Frame(card, bg=BORDER, height=1).pack(fill="x", pady=4)
@@ -959,11 +959,12 @@ class App(tk.Tk):
                 return
 
             if msg.get("type") == "quiz_start":
-                start_time = msg["start_time"]
-                duration   = msg["duration"]
-                topic      = msg.get("topic", "D")
-                difficulty  = msg.get("difficulty", "A")
-                wait        = start_time - time.time()
+                start_time    = msg["start_time"]
+                duration      = msg["duration"]
+                topic         = msg.get("topic", "D")
+                difficulty    = msg.get("difficulty", "A")
+                num_questions = msg.get("num_questions", 10)
+                wait          = start_time - time.time()
 
                 def countdown(secs):
                     if secs > 0:
@@ -973,28 +974,129 @@ class App(tk.Tk):
                     else:
                         self.after(0, lambda: [
                             progress.stop(),
-                            self._launch_mp_quiz(duration, topic, difficulty)
+                            self._launch_mp_quiz(duration, topic, difficulty, num_questions)
                         ])
 
                 self.after(0, lambda: countdown(max(0, int(wait))))
 
         threading.Thread(target=join_thread, daemon=True).start()
 
-    def _launch_mp_quiz(self, duration, topic, difficulty):
+    def _launch_mp_quiz(self, duration, topic, difficulty, num_questions=10):
         questions = self.client.get_quiz(topic, difficulty)
         if not questions:
             messagebox.showinfo("Multiplayer", "No questions received.")
             self._show_main_menu()
             return
+        questions = questions[:min(num_questions, len(questions))]
         self._show_quiz_ui(questions, duration)
 
         def wait_for_end():
             end_msg = recv_json(self.client.conn)
             if end_msg and end_msg.get("type") == "quiz_end":
-                self.after(0, lambda: messagebox.showinfo(
-                    "Multiplayer", "Quiz ended by server!"))
+                leaderboard = end_msg.get("leaderboard", [])
+                self.after(0, lambda: self._finish_mp_quiz(leaderboard))
 
         threading.Thread(target=wait_for_end, daemon=True).start()
+
+    def _finish_mp_quiz(self, leaderboard):
+        """Called when server sends quiz_end — save stats then show MP leaderboard."""
+        # Save answers and stats without navigating to the solo results screen
+        if not self._quiz_done:
+            self._quiz_done = True
+            # Commit _q_state to MCQ objects
+            for i, q in enumerate(self._questions):
+                ans = self._q_state[i]["answer"]
+                if not ans:
+                    q.user_option = "S"
+                    q.is_correct  = 0
+                else:
+                    q.user_option = ans
+                    q.is_correct  = 1 if ans == q.correct_option else 0
+            correct = sum(1 for q in self._questions if q.is_correct)
+            wrong   = sum(1 for q in self._questions
+                          if q.user_option != "S" and not q.is_correct)
+            skipped = sum(1 for q in self._questions if q.user_option == "S")
+            self.stats.total_correct   += correct
+            self.stats.total_incorrect += wrong
+            self.stats.total_skipped   += skipped
+            try:
+                self.client.save_stats(self.username, correct, wrong, skipped)
+            except Exception:
+                pass
+        self._show_mp_leaderboard(leaderboard)
+
+    # ═══════════════════════════════════════════════════════════════════
+    #  MULTIPLAYER LEADERBOARD SCREEN
+    # ═══════════════════════════════════════════════════════════════════
+    def _show_mp_leaderboard(self, leaderboard):
+        self._clear()
+        outer = tk.Frame(self.container, bg=BG)
+        outer.pack(fill="both", expand=True)
+
+        # header
+        hdr = tk.Frame(outer, bg=PANEL, height=50)
+        hdr.pack(fill="x")
+        hdr.pack_propagate(False)
+        label(hdr, "  ⚡ MULTIPLAYER — FINAL RESULTS", 13, ACCENT, True).pack(
+            side="left", padx=12, pady=12)
+        styled_btn(hdr, "← Menu", self._show_main_menu,
+                   width=8, bg="#21262d").pack(side="right", padx=12, pady=10)
+
+        # centre content
+        center = tk.Frame(outer, bg=BG)
+        center.place(relx=.5, rely=.5, anchor="center")
+
+        medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+        colors = {1: WARN, 2: SUBTEXT, 3: "#cd7f32"}   # gold, silver, bronze
+
+        if not leaderboard:
+            label(center, "No scores recorded.", 13, SUBTEXT).pack(pady=20)
+        else:
+            # Winner banner
+            winner = leaderboard[0]
+            banner = tk.Frame(center, bg=PANEL, padx=40, pady=20,
+                              highlightthickness=2, highlightbackground=WARN)
+            banner.pack(pady=(0, 24), fill="x")
+            label(banner, "🏆  WINNER", 12, WARN, True, bg=PANEL).pack()
+            label(banner, winner["username"], 20, WARN, True, bg=PANEL).pack(pady=4)
+            label(banner, f"{winner['score']} correct answers", 12, TEXT,
+                  bg=PANEL).pack()
+
+            # All players table
+            table = tk.Frame(center, bg=PANEL, padx=24, pady=16,
+                             highlightthickness=1, highlightbackground=BORDER)
+            table.pack(fill="x")
+
+            # column headers
+            hdr_row = tk.Frame(table, bg=PANEL)
+            hdr_row.pack(fill="x", pady=(0, 6))
+            tk.Frame(hdr_row, bg=BORDER, height=1).pack(fill="x")
+
+            col_hdr = tk.Frame(table, bg=PANEL)
+            col_hdr.pack(fill="x", pady=(0, 4))
+            for txt, w in [("  ", 4), ("Player", 22), ("Score", 10)]:
+                label(col_hdr, txt, 11, SUBTEXT, True, bg=PANEL,
+                      width=w).pack(side="left", padx=4)
+
+            tk.Frame(table, bg=BORDER, height=1).pack(fill="x", pady=(0, 6))
+
+            for entry in leaderboard:
+                rank  = entry["rank"]
+                medal = medals.get(rank, f"#{rank}")
+                col   = colors.get(rank, TEXT)
+
+                row = tk.Frame(table, bg=PANEL)
+                row.pack(fill="x", pady=3)
+
+                label(row, medal, 13, col, True, bg=PANEL,
+                      width=4).pack(side="left", padx=4)
+                label(row, entry["username"], 13, col, rank == 1,
+                      bg=PANEL, width=22).pack(side="left", padx=4)
+                label(row, str(entry["score"]), 13, col, True,
+                      bg=PANEL, width=10).pack(side="left", padx=4)
+
+        styled_btn(center, "Back to Menu", self._show_main_menu,
+                   width=20, bg="#21262d").pack(pady=(24, 0))
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -31,7 +31,7 @@ def recv_json(sock):
 
 
 
-SERVER_IP = "10.1.16.202"   # change if server IP changes
+SERVER_IP = "10.1.18.52"   # change if server IP changes
 PORT = 5000
 
 

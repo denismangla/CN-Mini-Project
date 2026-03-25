@@ -1,7 +1,5 @@
 """
 server_gui.py  –  Tkinter GUI dashboard for the Online Quiz System Server
-Replaces server.py (terminal server).  Keeps all original server logic intact
-and adds a live admin dashboard.
 """
 
 import tkinter as tk
@@ -16,16 +14,12 @@ import sys
 import struct
 import time
 
-# ── bring in quiz loader ────────────────────────────────────────────────────
 try:
     from quiz import load_questions
 except ImportError:
     print("[ERROR] quiz.py not found — make sure it is in the same folder.")
     sys.exit(1)
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  THEME
-# ═══════════════════════════════════════════════════════════════════════════
 BG      = "#0d1117"
 PANEL   = "#161b22"
 BORDER  = "#30363d"
@@ -38,29 +32,26 @@ SUBTEXT = "#8b949e"
 
 HOST = "0.0.0.0"
 PORT = 5000
-QUIZ_DURATION = 60  # seconds
+QUIZ_DURATION = 60
 selected_topic = "D"
 selected_difficulty = "A"
 NUM_QUESTIONS = 5
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  SERVER STATE (shared across threads — protected by locks)
-# ═══════════════════════════════════════════════════════════════════════════
 active_connections = 0
 connection_lock    = threading.Lock()
 
-waiting_players    = []          # list of (username, conn)
+waiting_players    = []   # list of (username, conn)
 quiz_started       = False
 quiz_lock          = threading.Lock()
 quiz_end_time      = None
 
-# GUI reference — set after App is created
+# Per-session multiplayer scores: { username: score }
+mp_scores      = {}
+mp_scores_lock = threading.Lock()
+
 _app = None
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  PROTOCOL HELPERS
-# ═══════════════════════════════════════════════════════════════════════════
 def send_json(sock, data):
     message = json.dumps(data).encode()
     length  = struct.pack("!I", len(message))
@@ -81,11 +72,7 @@ def recv_json(sock):
     return json.loads(data.decode())
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  SERVER LOGIC  (identical to server.py, minus the terminal prints)
-# ═══════════════════════════════════════════════════════════════════════════
 def log(msg):
-    """Thread-safe GUI log."""
     if _app:
         _app.gui_log(msg)
     else:
@@ -126,12 +113,10 @@ def load_quiz(topic, difficulty):
     topic_map    = {"A": "EPD", "B": "C Programming", "C": "Mental Ability",
                     "D": "Python", "E": "Triple Integration"}
     diff_map     = {"A": "Easy", "B": "Medium", "C": "Hard"}
-
     filename      = filename_map.get(topic, "python_questions.csv")
     topic_name    = topic_map.get(topic, topic)
     diff_name     = diff_map.get(difficulty, difficulty)
     questions     = load_questions(filename, topic_name, diff_name)
-
     return [{"id": q.id, "question": q.question,
              "A": q.option_a, "B": q.option_b,
              "C": q.option_c, "D": q.option_d,
@@ -153,6 +138,60 @@ def build_leaderboard():
             for r, e in enumerate(entries[:3], 1)]
 
 
+def build_mp_leaderboard():
+    """Build a ranked leaderboard from the current session's mp_scores."""
+    with mp_scores_lock:
+        scores = dict(mp_scores)
+    sorted_players = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+    result = []
+    for rank, (username, score) in enumerate(sorted_players, 1):
+        result.append({"rank": rank, "username": username, "score": score})
+    return result
+
+
+def broadcast_quiz_end():
+    """Broadcast quiz_end with the session leaderboard to all players, then log it."""
+    global quiz_started, waiting_players
+
+    leaderboard = build_mp_leaderboard()
+
+    # Log to server console
+    log("=" * 40)
+    log("[MP] QUIZ ENDED — FINAL SCORES")
+    log("=" * 40)
+    medals = {1: "🥇", 2: "🥈", 3: "🥉"}
+    if leaderboard:
+        for entry in leaderboard:
+            medal = medals.get(entry["rank"], f"#{entry['rank']}")
+            log(f"  {medal}  {entry['username']:<20} {entry['score']} pts")
+        winner = leaderboard[0]["username"]
+        log(f"[MP] 🏆 Winner: {winner}")
+    else:
+        log("[MP] No scores recorded.")
+    log("=" * 40)
+
+    # Broadcast to all clients
+    with quiz_lock:
+        for _, conn in waiting_players:
+            try:
+                send_json(conn, {
+                    "type": "quiz_end",
+                    "leaderboard": leaderboard
+                })
+            except Exception:
+                pass
+        waiting_players.clear()
+        quiz_started = False
+
+    # Reset session scores
+    with mp_scores_lock:
+        mp_scores.clear()
+
+    if _app:
+        _app.refresh_lobby()
+        _app.refresh_leaderboard()
+
+
 def start_multiplayer_quiz():
     global quiz_started, quiz_end_time
     with quiz_lock:
@@ -165,6 +204,13 @@ def start_multiplayer_quiz():
         quiz_started  = True
         start_time    = time.time() + 5
         quiz_end_time = start_time + QUIZ_DURATION
+
+        # Initialise scores to 0 for all waiting players
+        with mp_scores_lock:
+            mp_scores.clear()
+            for username, _ in waiting_players:
+                mp_scores[username] = 0
+
         log(f"[MP] Quiz starting! Players: {len(waiting_players)}")
         for username, conn in waiting_players:
             try:
@@ -183,21 +229,11 @@ def start_multiplayer_quiz():
 
 
 def quiz_timer_monitor():
-    global quiz_started, waiting_players
     while True:
         if quiz_started and quiz_end_time:
             if time.time() >= quiz_end_time:
-                log("[MP] Quiz ended by server.")
-                with quiz_lock:
-                    for _, conn in waiting_players:
-                        try:
-                            send_json(conn, {"type": "quiz_end"})
-                        except Exception:
-                            pass
-                    waiting_players.clear()
-                    quiz_started = False
-                if _app:
-                    _app.refresh_lobby()
+                log("[MP] Quiz time expired — ending quiz.")
+                broadcast_quiz_end()
         time.sleep(1)
 
 
@@ -208,6 +244,8 @@ def handle_client(conn, addr):
     log(f"[CONNECTED] {addr}  (total: {active_connections})")
     if _app:
         _app.update_conn_count(active_connections)
+
+    current_user = None
 
     try:
         while True:
@@ -220,6 +258,8 @@ def handle_client(conn, addr):
             if req_type == "login":
                 u, p = req.get("username"), req.get("password")
                 ok   = authenticate(u, p)
+                if ok:
+                    current_user = u
                 log(f"[LOGIN] {u} → {'OK' if ok else 'FAIL'}")
                 send_json(conn, {"status": "success" if ok else "fail"})
 
@@ -236,6 +276,13 @@ def handle_client(conn, addr):
             elif req_type == "save_stats":
                 u  = req["username"]
                 c, w, s = req["correct"], req["wrong"], req["skipped"]
+
+                # Update multiplayer session score if player is in mp_scores
+                with mp_scores_lock:
+                    if u in mp_scores:
+                        mp_scores[u] = c
+                        log(f"[MP SCORE] {u} scored {c} correct")
+
                 rows  = []
                 found = False
                 if os.path.exists("user_stats.csv"):
@@ -258,6 +305,7 @@ def handle_client(conn, addr):
 
             elif req_type == "join_multiplayer":
                 u = req["username"]
+                current_user = u
                 if quiz_started:
                     send_json(conn, {"status": "started",
                                      "message": "Quiz already started."})
@@ -311,7 +359,6 @@ def handle_client(conn, addr):
     finally:
         with connection_lock:
             active_connections -= 1
-        # remove from lobby if present
         with quiz_lock:
             waiting_players = [(u, c) for u, c in waiting_players if c is not conn]
         conn.close()
@@ -324,11 +371,9 @@ def handle_client(conn, addr):
 def start_server_thread():
     try:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain("certs/server.crt", "certs/server.key")
     except Exception as e:
-        log(f"[SSL ERROR] {e}\n"
-            "Make sure certs/server.crt and certs/server.key exist.")
+        log(f"[SSL ERROR] {e}\nMake sure certs/server.crt and certs/server.key exist.")
         return
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -361,13 +406,10 @@ class ServerApp(tk.Tk):
         self.configure(bg=BG)
         self.resizable(True, True)
         self.protocol("WM_DELETE_WINDOW", self._on_close)
-
         self._build_ui()
         self._start_server()
 
-    # ── UI construction ──────────────────────────────────────────────────
     def _build_ui(self):
-        # ── top bar ──
         top = tk.Frame(self, bg=PANEL, height=52)
         top.pack(fill="x")
         top.pack_propagate(False)
@@ -383,12 +425,11 @@ class ServerApp(tk.Tk):
                                     font=("Consolas", 10, "bold"))
         self._status_dot.pack(side="right", padx=10)
 
-        # ── main panes ──
         panes = tk.PanedWindow(self, orient="horizontal", bg=BORDER,
                                sashrelief="flat", sashwidth=3)
-        panes.pack(fill="both", expand=True, padx=0, pady=0)
+        panes.pack(fill="both", expand=True)
 
-        # left panel — log
+        # ── left: log ──
         left = tk.Frame(panes, bg=BG)
         panes.add(left, minsize=420)
 
@@ -399,20 +440,20 @@ class ServerApp(tk.Tk):
             left, bg=BG, fg=TEXT, font=("Consolas", 9),
             insertbackground=ACCENT, relief="flat", bd=0,
             state="disabled", wrap="word")
-        self._log.pack(fill="both", expand=True, padx=0, pady=0)
+        self._log.pack(fill="both", expand=True)
 
-        # colour tags
         self._log.tag_config("info",    foreground=TEXT)
         self._log.tag_config("success", foreground=GREEN)
         self._log.tag_config("error",   foreground=RED)
         self._log.tag_config("warn",    foreground=WARN)
         self._log.tag_config("accent",  foreground=ACCENT)
+        self._log.tag_config("gold",    foreground=WARN)
 
-        # right panel — controls + lobby + leaderboard
+        # ── right: controls ──
         right = tk.Frame(panes, bg=BG)
         panes.add(right, minsize=340)
 
-        # ── MP control ──
+        # MP control card
         mp_card = tk.Frame(right, bg=PANEL, padx=16, pady=14,
                            highlightthickness=1, highlightbackground=BORDER)
         mp_card.pack(fill="x", padx=12, pady=(12, 6))
@@ -425,93 +466,46 @@ class ServerApp(tk.Tk):
         self._lobby_lbl.pack(anchor="w", pady=(6, 2))
 
         self._mp_status_lbl = tk.Label(mp_card, text="Status: Idle",
-                                       bg=PANEL, fg=SUBTEXT,
-                                       font=("Consolas", 9))
+                                       bg=PANEL, fg=SUBTEXT, font=("Consolas", 9))
         self._mp_status_lbl.pack(anchor="w", pady=(0, 10))
 
-
-        # --- Topic Selection ---
         tk.Label(mp_card, text="Topic", bg=PANEL, fg=SUBTEXT,
-                font=("Consolas", 9)).pack(anchor="w")
-
+                 font=("Consolas", 9)).pack(anchor="w")
         self._topic_var = tk.StringVar(value="D")
-
-        topic_map = {
-            "A": "EPD",
-            "B": "C Programming",
-            "C": "Mental Ability",
-            "D": "Python",
-            "E": "Triple Integration"
-        }
-
-        self._topic_dropdown = ttk.Combobox(
-            mp_card,
-            textvariable=self._topic_var,
-            values=list(topic_map.values()),
-            state="readonly"
-        )
+        topic_map = {"A": "EPD", "B": "C Programming", "C": "Mental Ability",
+                     "D": "Python", "E": "Triple Integration"}
+        self._topic_dropdown = ttk.Combobox(mp_card, textvariable=self._topic_var,
+                                            values=list(topic_map.values()),
+                                            state="readonly")
         self._topic_dropdown.pack(fill="x", pady=(2, 8))
-        self._topic_dropdown.current(3)  # Python default
+        self._topic_dropdown.current(3)
 
-
-        # --- Difficulty Selection ---
         tk.Label(mp_card, text="Difficulty", bg=PANEL, fg=SUBTEXT,
-                font=("Consolas", 9)).pack(anchor="w")
-
+                 font=("Consolas", 9)).pack(anchor="w")
         self._diff_var = tk.StringVar(value="A")
-
-        diff_map = {
-            "A": "Easy",
-            "B": "Medium",
-            "C": "Hard"
-        }
-
-        self._diff_dropdown = ttk.Combobox(
-            mp_card,
-            textvariable=self._diff_var,
-            values=list(diff_map.values()),
-            state="readonly"
-        )
+        self._diff_dropdown = ttk.Combobox(mp_card, textvariable=self._diff_var,
+                                           values=["Easy", "Medium", "Hard"],
+                                           state="readonly")
         self._diff_dropdown.pack(fill="x", pady=(2, 8))
         self._diff_dropdown.current(0)
 
-
-        # --- Duration ---
         tk.Label(mp_card, text="Duration (seconds)", bg=PANEL, fg=SUBTEXT,
-                font=("Consolas", 9)).pack(anchor="w")
-
+                 font=("Consolas", 9)).pack(anchor="w")
         self._duration_var = tk.IntVar(value=60)
+        tk.Spinbox(mp_card, from_=10, to=600, textvariable=self._duration_var,
+                   bg=BG, fg=TEXT, font=("Consolas", 10)).pack(fill="x", pady=(2, 10))
 
-        tk.Spinbox(
-            mp_card,
-            from_=10, to=600,
-            textvariable=self._duration_var,
-            bg=BG, fg=TEXT,
-            font=("Consolas", 10)
-        ).pack(fill="x", pady=(2, 10))
-
-
-        # --- Number of Questions ---
         tk.Label(mp_card, text="Number of Questions", bg=PANEL, fg=SUBTEXT,
-                font=("Consolas", 9)).pack(anchor="w")
-
+                 font=("Consolas", 9)).pack(anchor="w")
         self._num_q_var = tk.IntVar(value=5)
-
-        tk.Spinbox(
-            mp_card,
-            from_=1, to=50,
-            textvariable=self._num_q_var,
-            bg=BG, fg=TEXT,
-            font=("Consolas", 10)
-        ).pack(fill="x", pady=(2, 10))
-
+        tk.Spinbox(mp_card, from_=1, to=50, textvariable=self._num_q_var,
+                   bg=BG, fg=TEXT, font=("Consolas", 10)).pack(fill="x", pady=(2, 10))
 
         self._start_mp_btn = tk.Button(
             mp_card, text="▶  START MULTIPLAYER QUIZ",
             bg=GREEN, fg="#000", activebackground="#2ea043",
             relief="flat", bd=0, font=("Consolas", 10, "bold"),
-            padx=8, pady=6, cursor="hand2",
-            command=self._on_start_mp)
+            padx=8, pady=6, cursor="hand2", command=self._on_start_mp)
         self._start_mp_btn.pack(fill="x")
 
         self._end_mp_btn = tk.Button(
@@ -522,7 +516,7 @@ class ServerApp(tk.Tk):
             command=self._on_end_mp, state="disabled")
         self._end_mp_btn.pack(fill="x", pady=(6, 0))
 
-        # ── lobby list ──
+        # Lobby list
         lobby_card = tk.Frame(right, bg=PANEL, padx=16, pady=14,
                               highlightthickness=1, highlightbackground=BORDER)
         lobby_card.pack(fill="x", padx=12, pady=6)
@@ -531,13 +525,12 @@ class ServerApp(tk.Tk):
                  font=("Consolas", 9, "bold")).pack(anchor="w", pady=(0, 6))
 
         self._lobby_list = tk.Listbox(lobby_card, bg=BG, fg=ACCENT,
-                                      font=("Consolas", 10),
-                                      relief="flat", bd=0,
-                                      highlightthickness=0,
+                                      font=("Consolas", 10), relief="flat",
+                                      bd=0, highlightthickness=0,
                                       selectbackground=BORDER, height=5)
         self._lobby_list.pack(fill="x")
 
-        # ── leaderboard ──
+        # Leaderboard
         lb_card = tk.Frame(right, bg=PANEL, padx=16, pady=14,
                            highlightthickness=1, highlightbackground=BORDER)
         lb_card.pack(fill="both", expand=True, padx=12, pady=(6, 12))
@@ -546,22 +539,18 @@ class ServerApp(tk.Tk):
         hdr_row.pack(fill="x")
         tk.Label(hdr_row, text="LEADERBOARD", bg=PANEL, fg=SUBTEXT,
                  font=("Consolas", 9, "bold")).pack(side="left")
-        tk.Button(hdr_row, text="⟳", bg=PANEL, fg=ACCENT,
-                  relief="flat", bd=0, font=("Consolas", 10),
-                  cursor="hand2", command=self.refresh_leaderboard).pack(side="right")
+        tk.Button(hdr_row, text="⟳", bg=PANEL, fg=ACCENT, relief="flat",
+                  bd=0, font=("Consolas", 10), cursor="hand2",
+                  command=self.refresh_leaderboard).pack(side="right")
 
         cols = ("Rank", "Username", "Score")
         self._lb_tree = ttk.Treeview(lb_card, columns=cols,
                                      show="headings", height=6)
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Treeview",
-                         background=BG, foreground=TEXT,
-                         fieldbackground=BG,
-                         font=("Consolas", 10),
-                         rowheight=26)
-        style.configure("Treeview.Heading",
-                         background=PANEL, foreground=SUBTEXT,
+        style.configure("Treeview", background=BG, foreground=TEXT,
+                         fieldbackground=BG, font=("Consolas", 10), rowheight=26)
+        style.configure("Treeview.Heading", background=PANEL, foreground=SUBTEXT,
                          font=("Consolas", 9, "bold"), relief="flat")
         style.map("Treeview", background=[("selected", BORDER)])
 
@@ -573,20 +562,14 @@ class ServerApp(tk.Tk):
         self._lb_tree.pack(fill="both", expand=True, pady=(8, 0))
         self.refresh_leaderboard()
 
-    # ── server bootstrap ────────────────────────────────────────────────
     def _start_server(self):
-        t = threading.Thread(target=start_server_thread, daemon=True)
-        t.start()
-        # give it a moment then mark online
-        self.after(1000, lambda: self._status_dot.config(
-            text="●  ONLINE", fg=GREEN))
+        threading.Thread(target=start_server_thread, daemon=True).start()
+        self.after(1000, lambda: self._status_dot.config(text="●  ONLINE", fg=GREEN))
 
-    # ── GUI helpers ──────────────────────────────────────────────────────
     def gui_log(self, msg):
-        """Append a line to the server log (thread-safe via after())."""
         def _append():
             self._log.config(state="normal")
-            ts = time.strftime("%H:%M:%S")
+            ts  = time.strftime("%H:%M:%S")
             tag = "info"
             if "[ERROR]" in msg or "FAIL" in msg:
                 tag = "error"
@@ -596,14 +579,15 @@ class ServerApp(tk.Tk):
                 tag = "warn"
             elif "[MP]" in msg or "[SERVER]" in msg:
                 tag = "accent"
+            elif "===" in msg or "Winner" in msg or "🥇" in msg:
+                tag = "gold"
             self._log.insert("end", f"[{ts}] {msg}\n", tag)
             self._log.see("end")
             self._log.config(state="disabled")
         self.after(0, _append)
 
     def update_conn_count(self, n):
-        self.after(0, lambda: self._conn_lbl.config(
-            text=f"Connections: {n}"))
+        self.after(0, lambda: self._conn_lbl.config(text=f"Connections: {n}"))
 
     def refresh_lobby(self):
         def _refresh():
@@ -618,7 +602,8 @@ class ServerApp(tk.Tk):
                 self._end_mp_btn.config(state="normal")
             else:
                 self._mp_status_lbl.config(text="Status: Idle", fg=SUBTEXT)
-                self._start_mp_btn.config(state="normal" if count > 0 else "disabled")
+                self._start_mp_btn.config(
+                    state="normal" if count > 0 else "disabled")
                 self._end_mp_btn.config(state="disabled")
         self.after(0, _refresh)
 
@@ -630,61 +615,30 @@ class ServerApp(tk.Tk):
             for entry in build_leaderboard():
                 self._lb_tree.insert("", "end", values=(
                     medals.get(entry["rank"], entry["rank"]),
-                    entry["username"],
-                    entry["score"]))
+                    entry["username"], entry["score"]))
         self.after(0, _refresh)
 
-    # ── button handlers ──────────────────────────────────────────────────
     def _on_start_mp(self):
-
-        global selected_topic, selected_difficulty, QUIZ_DURATION
-        global NUM_QUESTIONS
+        global selected_topic, selected_difficulty, QUIZ_DURATION, NUM_QUESTIONS
         NUM_QUESTIONS = self._num_q_var.get()
-
         if not waiting_players:
             messagebox.showwarning("Multiplayer", "No players in the lobby yet.")
             return
-
-        # --- Get Topic ---
-        topic_map_reverse = {
-            "EPD": "A",
-            "C Programming": "B",
-            "Mental Ability": "C",
-            "Python": "D",
-            "Triple Integration": "E"
-        }
-
-        selected_topic = topic_map_reverse.get(self._topic_dropdown.get(), "D")
-
-        # --- Get Difficulty ---
-        diff_map_reverse = {
-            "Easy": "A",
-            "Medium": "B",
-            "Hard": "C"
-        }
-
+        topic_map_reverse = {"EPD": "A", "C Programming": "B",
+                              "Mental Ability": "C", "Python": "D",
+                              "Triple Integration": "E"}
+        diff_map_reverse  = {"Easy": "A", "Medium": "B", "Hard": "C"}
+        selected_topic      = topic_map_reverse.get(self._topic_dropdown.get(), "D")
         selected_difficulty = diff_map_reverse.get(self._diff_dropdown.get(), "A")
-
-        # --- Get Duration ---
-        QUIZ_DURATION = self._duration_var.get()
-
-        log(f"[MP CONFIG] Topic={selected_topic}, Difficulty={selected_difficulty}, Duration={QUIZ_DURATION}, Questions={NUM_QUESTIONS}")
-
+        QUIZ_DURATION       = self._duration_var.get()
+        log(f"[MP CONFIG] Topic={selected_topic}, Difficulty={selected_difficulty}, "
+            f"Duration={QUIZ_DURATION}, Questions={NUM_QUESTIONS}")
         threading.Thread(target=start_multiplayer_quiz, daemon=True).start()
         self.refresh_lobby()
 
     def _on_end_mp(self):
-        global quiz_started, quiz_end_time, waiting_players
-        with quiz_lock:
-            log("[MP] Quiz ended manually by admin.")
-            for _, conn in waiting_players:
-                try:
-                    send_json(conn, {"type": "quiz_end"})
-                except Exception:
-                    pass
-            waiting_players = []
-            quiz_started    = False
-            quiz_end_time   = None
+        log("[MP] Quiz ended manually by admin.")
+        threading.Thread(target=broadcast_quiz_end, daemon=True).start()
         self.refresh_lobby()
 
     def _on_close(self):
@@ -693,10 +647,7 @@ class ServerApp(tk.Tk):
             os._exit(0)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  ENTRY POINT
-# ═══════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     app = ServerApp()
-    _app = app          # make server threads able to reach the GUI
+    _app = app
     app.mainloop()
